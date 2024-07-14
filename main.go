@@ -28,33 +28,8 @@ type ProgramInfo struct {
 	Copyrights       []any    `json:"copyrights"`
 	Description      string   `json:"description"`
 	Episodes         struct {
-		Href  string `json:"href"`
-		Items []struct {
-			AudioPreviewURL string `json:"audio_preview_url"`
-			Description     string `json:"description"`
-			DurationMs      int    `json:"duration_ms"`
-			Explicit        bool   `json:"explicit"`
-			ExternalUrls    struct {
-				Spotify string `json:"spotify"`
-			} `json:"external_urls"`
-			Href            string `json:"href"`
-			HTMLDescription string `json:"html_description"`
-			ID              string `json:"id"`
-			Images          []struct {
-				Height int    `json:"height"`
-				URL    string `json:"url"`
-				Width  int    `json:"width"`
-			} `json:"images"`
-			IsExternallyHosted   bool     `json:"is_externally_hosted"`
-			IsPlayable           bool     `json:"is_playable"`
-			Language             string   `json:"language"`
-			Languages            []string `json:"languages"`
-			Name                 string   `json:"name"`
-			ReleaseDate          string   `json:"release_date"`
-			ReleaseDatePrecision string   `json:"release_date_precision"`
-			Type                 string   `json:"type"`
-			URI                  string   `json:"uri"`
-		} `json:"items"`
+		Href     string `json:"href"`
+		Items    []Item `json:"items"`
 		Limit    int    `json:"limit"`
 		Next     string `json:"next"`
 		Offset   int    `json:"offset"`
@@ -84,38 +59,40 @@ type ProgramInfo struct {
 }
 
 type ProgramInfoNext struct {
-	Href  string `json:"href"`
-	Items []struct {
-		AudioPreviewURL string `json:"audio_preview_url"`
-		Description     string `json:"description"`
-		DurationMs      int    `json:"duration_ms"`
-		Explicit        bool   `json:"explicit"`
-		ExternalUrls    struct {
-			Spotify string `json:"spotify"`
-		} `json:"external_urls"`
-		Href            string `json:"href"`
-		HTMLDescription string `json:"html_description"`
-		ID              string `json:"id"`
-		Images          []struct {
-			Height int    `json:"height"`
-			URL    string `json:"url"`
-			Width  int    `json:"width"`
-		} `json:"images"`
-		IsExternallyHosted   bool     `json:"is_externally_hosted"`
-		IsPlayable           bool     `json:"is_playable"`
-		Language             string   `json:"language"`
-		Languages            []string `json:"languages"`
-		Name                 string   `json:"name"`
-		ReleaseDate          string   `json:"release_date"`
-		ReleaseDatePrecision string   `json:"release_date_precision"`
-		Type                 string   `json:"type"`
-		URI                  string   `json:"uri"`
-	} `json:"items"`
+	Href     string `json:"href"`
+	Items    []Item `json:"items"`
 	Limit    int    `json:"limit"`
 	Next     string `json:"next"`
 	Offset   int    `json:"offset"`
 	Previous string `json:"previous"`
 	Total    int    `json:"total"`
+}
+
+type Item struct {
+	AudioPreviewURL string `json:"audio_preview_url"`
+	Description     string `json:"description"`
+	DurationMs      int    `json:"duration_ms"`
+	Explicit        bool   `json:"explicit"`
+	ExternalUrls    struct {
+		Spotify string `json:"spotify"`
+	} `json:"external_urls"`
+	Href            string `json:"href"`
+	HTMLDescription string `json:"html_description"`
+	ID              string `json:"id"`
+	Images          []struct {
+		Height int    `json:"height"`
+		URL    string `json:"url"`
+		Width  int    `json:"width"`
+	} `json:"images"`
+	IsExternallyHosted   bool     `json:"is_externally_hosted"`
+	IsPlayable           bool     `json:"is_playable"`
+	Language             string   `json:"language"`
+	Languages            []string `json:"languages"`
+	Name                 string   `json:"name"`
+	ReleaseDate          string   `json:"release_date"`
+	ReleaseDatePrecision string   `json:"release_date_precision"`
+	Type                 string   `json:"type"`
+	URI                  string   `json:"uri"`
 }
 
 func GetAccessToken(config Config) (TokenResponse, error) {
