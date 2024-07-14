@@ -23,7 +23,77 @@ type TokenResponse struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
+func GetAccessToken(config Config) (TokenResponse, error) {
+	var tokenResponse TokenResponse
+
+	data := url.Values{}
+	data.Set("grant_type", "client_credentials")
+	data.Set("client_id", config.ClientID)
+	data.Set("client_secret", config.ClientSecret)
+
+	req, err := http.NewRequest("POST", config.TokenURL, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return tokenResponse, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return tokenResponse, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return tokenResponse, err
+	}
+
+	err = json.Unmarshal(body, &tokenResponse)
+	if err != nil {
+		return tokenResponse, err
+	}
+
+	return tokenResponse, nil
+}
+
+func GetData(tokenResponse TokenResponse) error {
+	url := "https://api.spotify.com/v1/artists/4Z8W4fKeB5YxbusRsdQVPb"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResponse.AccessToken))
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(body))
+
+	return nil
+}
+
 func main() {
+	// config読込
 	configFile, err := os.Open("config.json")
 	if err != nil {
 		log.Fatalf("Failed to open config file: %v", err)
@@ -36,41 +106,13 @@ func main() {
 		log.Fatalf("Failed to decode config file: %v", err)
 	}
 
-	data := url.Values{}
-	data.Set("grant_type", "client_credentials")
-	data.Set("client_id", config.ClientID)
-	data.Set("client_secret", config.ClientSecret)
-
-	req, err := http.NewRequest("POST", config.TokenURL, bytes.NewBufferString(data.Encode()))
+	// アクセストークン取得
+	tokenResponse, err := GetAccessToken(config)
 	if err != nil {
-		log.Fatalf("Failed to create request: %v", err)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Unexpected status code: %d", resp.StatusCode)
+		log.Fatalf(err.Error())
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("Failed to read response body: %v", err)
-	}
+	// データ取得
+	GetData(tokenResponse)
 
-	var tokenResponse TokenResponse
-	err = json.Unmarshal(body, &tokenResponse)
-	if err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
-
-	fmt.Printf("Access Token: %s\n", tokenResponse.AccessToken)
-	fmt.Printf("Token Type: %s\n", tokenResponse.TokenType)
-	fmt.Printf("Expires In: %d seconds\n", tokenResponse.ExpiresIn)
 }
