@@ -23,6 +23,101 @@ type TokenResponse struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
+type ProgramInfo struct {
+	AvailableMarkets []string `json:"available_markets"`
+	Copyrights       []any    `json:"copyrights"`
+	Description      string   `json:"description"`
+	Episodes         struct {
+		Href  string `json:"href"`
+		Items []struct {
+			AudioPreviewURL string `json:"audio_preview_url"`
+			Description     string `json:"description"`
+			DurationMs      int    `json:"duration_ms"`
+			Explicit        bool   `json:"explicit"`
+			ExternalUrls    struct {
+				Spotify string `json:"spotify"`
+			} `json:"external_urls"`
+			Href            string `json:"href"`
+			HTMLDescription string `json:"html_description"`
+			ID              string `json:"id"`
+			Images          []struct {
+				Height int    `json:"height"`
+				URL    string `json:"url"`
+				Width  int    `json:"width"`
+			} `json:"images"`
+			IsExternallyHosted   bool     `json:"is_externally_hosted"`
+			IsPlayable           bool     `json:"is_playable"`
+			Language             string   `json:"language"`
+			Languages            []string `json:"languages"`
+			Name                 string   `json:"name"`
+			ReleaseDate          string   `json:"release_date"`
+			ReleaseDatePrecision string   `json:"release_date_precision"`
+			Type                 string   `json:"type"`
+			URI                  string   `json:"uri"`
+		} `json:"items"`
+		Limit    int    `json:"limit"`
+		Next     string `json:"next"`
+		Offset   int    `json:"offset"`
+		Previous any    `json:"previous"`
+		Total    int    `json:"total"`
+	} `json:"episodes"`
+	Explicit     bool `json:"explicit"`
+	ExternalUrls struct {
+		Spotify string `json:"spotify"`
+	} `json:"external_urls"`
+	Href            string `json:"href"`
+	HTMLDescription string `json:"html_description"`
+	ID              string `json:"id"`
+	Images          []struct {
+		Height int    `json:"height"`
+		URL    string `json:"url"`
+		Width  int    `json:"width"`
+	} `json:"images"`
+	IsExternallyHosted bool     `json:"is_externally_hosted"`
+	Languages          []string `json:"languages"`
+	MediaType          string   `json:"media_type"`
+	Name               string   `json:"name"`
+	Publisher          string   `json:"publisher"`
+	TotalEpisodes      int      `json:"total_episodes"`
+	Type               string   `json:"type"`
+	URI                string   `json:"uri"`
+}
+
+type ProgramInfoNext struct {
+	Href  string `json:"href"`
+	Items []struct {
+		AudioPreviewURL string `json:"audio_preview_url"`
+		Description     string `json:"description"`
+		DurationMs      int    `json:"duration_ms"`
+		Explicit        bool   `json:"explicit"`
+		ExternalUrls    struct {
+			Spotify string `json:"spotify"`
+		} `json:"external_urls"`
+		Href            string `json:"href"`
+		HTMLDescription string `json:"html_description"`
+		ID              string `json:"id"`
+		Images          []struct {
+			Height int    `json:"height"`
+			URL    string `json:"url"`
+			Width  int    `json:"width"`
+		} `json:"images"`
+		IsExternallyHosted   bool     `json:"is_externally_hosted"`
+		IsPlayable           bool     `json:"is_playable"`
+		Language             string   `json:"language"`
+		Languages            []string `json:"languages"`
+		Name                 string   `json:"name"`
+		ReleaseDate          string   `json:"release_date"`
+		ReleaseDatePrecision string   `json:"release_date_precision"`
+		Type                 string   `json:"type"`
+		URI                  string   `json:"uri"`
+	} `json:"items"`
+	Limit    int    `json:"limit"`
+	Next     string `json:"next"`
+	Offset   int    `json:"offset"`
+	Previous string `json:"previous"`
+	Total    int    `json:"total"`
+}
+
 func GetAccessToken(config Config) (TokenResponse, error) {
 	var tokenResponse TokenResponse
 
@@ -62,11 +157,10 @@ func GetAccessToken(config Config) (TokenResponse, error) {
 	return tokenResponse, nil
 }
 
-func GetData(tokenResponse TokenResponse) error {
-	url := "https://api.spotify.com/v1/artists/4Z8W4fKeB5YxbusRsdQVPb"
+func GetProgramData(tokenResponse TokenResponse, url string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResponse.AccessToken))
@@ -74,7 +168,7 @@ func GetData(tokenResponse TokenResponse) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -84,12 +178,10 @@ func GetData(tokenResponse TokenResponse) error {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	fmt.Println(string(body))
-
-	return nil
+	return body, nil
 }
 
 func main() {
@@ -113,6 +205,41 @@ func main() {
 	}
 
 	// データ取得
-	GetData(tokenResponse)
+	url := "https://api.spotify.com/v1/shows/"
+	program := "4zqDMbg9WSpC5l81gJCfEc"
+	url += program
 
+	var pi ProgramInfo
+	var pin ProgramInfoNext
+
+	for i := 0; ; i++ {
+		body, err := GetProgramData(tokenResponse, url)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		if i == 0 {
+			err = json.Unmarshal(body, &pi)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			if pi.Episodes.Next != "" {
+				url = pi.Episodes.Next
+			} else {
+				break
+			}
+		} else {
+			err = json.Unmarshal(body, &pin)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			if pin.Next != "" {
+				url = pin.Next
+			} else {
+				break
+			}
+		}
+	}
 }
