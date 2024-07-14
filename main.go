@@ -188,6 +188,7 @@ func main() {
 
 	var pi ProgramInfo
 	var pin ProgramInfoNext
+	var items []Item
 
 	var totalItem int
 	var readItem int
@@ -207,6 +208,8 @@ func main() {
 			totalItem = pi.TotalEpisodes
 			readItem += len(pi.Episodes.Items)
 
+			items = append(items, pi.Episodes.Items...)
+
 			if pi.Episodes.Next != "" {
 				url = pi.Episodes.Next
 			} else {
@@ -219,6 +222,8 @@ func main() {
 			}
 
 			readItem += len(pin.Items)
+
+			items = append(items, pin.Items...)
 
 			if pin.Next != "" {
 				url = pin.Next
