@@ -189,6 +189,9 @@ func main() {
 	var pi ProgramInfo
 	var pin ProgramInfoNext
 
+	var totalItem int
+	var readItem int
+
 	for i := 0; ; i++ {
 		body, err := GetProgramData(tokenResponse, url)
 		if err != nil {
@@ -201,6 +204,9 @@ func main() {
 				log.Fatal(err.Error())
 			}
 
+			totalItem = pi.TotalEpisodes
+			readItem += len(pi.Episodes.Items)
+
 			if pi.Episodes.Next != "" {
 				url = pi.Episodes.Next
 			} else {
@@ -212,11 +218,17 @@ func main() {
 				log.Fatal(err.Error())
 			}
 
+			readItem += len(pin.Items)
+
 			if pin.Next != "" {
 				url = pin.Next
 			} else {
 				break
 			}
+		}
+
+		if totalItem == readItem {
+			break
 		}
 	}
 }
