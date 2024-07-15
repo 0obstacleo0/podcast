@@ -9,6 +9,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
 type Config struct {
@@ -161,6 +166,41 @@ func GetProgramData(tokenResponse TokenResponse, url string) ([]byte, error) {
 	return body, nil
 }
 
+func PutItem(items []Item) {
+	sess, err := session.NewSession(&aws.Config{
+		Region:      aws.String("us-west-2"),
+		Endpoint:    aws.String("http://localhost:8000"),
+		Credentials: credentials.NewStaticCredentials("dummy", "dummy", "dummy")},
+	)
+	if err != nil {
+		log.Fatalf("Failed to create session: %v", err)
+	}
+
+	svc := dynamodb.New(sess)
+
+	for _, item := range items {
+		fmt.Println(item.Name, item.Description)
+		input := &dynamodb.PutItemInput{
+			TableName: aws.String("Program"),
+			Item: map[string]*dynamodb.AttributeValue{
+				"Name": {
+					S: aws.String(item.Name),
+				},
+				"Description": {
+					S: aws.String(item.Description),
+				},
+			},
+		}
+
+		_, err = svc.PutItem(input)
+		if err != nil {
+			log.Fatalf("Failed to put item: %v", err)
+		}
+	}
+
+	fmt.Println("Successfully added item to table")
+}
+
 func main() {
 	// config読込
 	configFile, err := os.Open("config.json")
@@ -236,4 +276,6 @@ func main() {
 			break
 		}
 	}
+
+	PutItem(items)
 }
