@@ -181,7 +181,6 @@ func PutItem(config Config, items []Item) error {
 	svc := dynamodb.New(sess)
 
 	for _, item := range items {
-		fmt.Println(item.Name, item.Description)
 		input := &dynamodb.PutItemInput{
 			TableName: aws.String("Program"),
 			Item: map[string]*dynamodb.AttributeValue{
@@ -215,13 +214,20 @@ func DeleteTable(config Config) error {
 
 	svc := dynamodb.New(sess)
 
-	deleteTableInput := &dynamodb.DeleteTableInput{
+	describeTableInput := &dynamodb.DescribeTableInput{
 		TableName: aws.String("Program"),
 	}
 
-	_, err = svc.DeleteTable(deleteTableInput)
-	if err != nil {
-		return err
+	_, err = svc.DescribeTable(describeTableInput)
+	if err == nil {
+		deleteTableInput := &dynamodb.DeleteTableInput{
+			TableName: aws.String("Program"),
+		}
+
+		_, err = svc.DeleteTable(deleteTableInput)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
