@@ -168,14 +168,14 @@ func GetProgramData(tokenResponse TokenResponse, url string) ([]byte, error) {
 	return body, nil
 }
 
-func PutItem(config Config, items []Item) {
+func PutItem(config Config, items []Item) error {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String(config.Region),
 		Endpoint:    aws.String(config.Endpoint),
 		Credentials: credentials.NewStaticCredentials("dummy", "dummy", "dummy")},
 	)
 	if err != nil {
-		log.Fatalf("Failed to create session: %v", err)
+		return err
 	}
 
 	svc := dynamodb.New(sess)
@@ -196,11 +196,75 @@ func PutItem(config Config, items []Item) {
 
 		_, err = svc.PutItem(input)
 		if err != nil {
-			log.Fatalf("Failed to put item: %v", err)
+			return err
 		}
 	}
 
-	fmt.Println("Successfully added item to table")
+	return nil
+}
+
+func DeleteTable(config Config) error {
+	sess, err := session.NewSession(&aws.Config{
+		Region:      aws.String(config.Region),
+		Endpoint:    aws.String(config.Endpoint),
+		Credentials: credentials.NewStaticCredentials("dummy", "dummy", "dummy")},
+	)
+	if err != nil {
+		return err
+	}
+
+	svc := dynamodb.New(sess)
+
+	deleteTableInput := &dynamodb.DeleteTableInput{
+		TableName: aws.String("Program"),
+	}
+
+	_, err = svc.DeleteTable(deleteTableInput)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateTable(config Config) error {
+	sess, err := session.NewSession(&aws.Config{
+		Region:      aws.String(config.Region),
+		Endpoint:    aws.String(config.Endpoint),
+		Credentials: credentials.NewStaticCredentials("dummy", "dummy", "dummy")},
+	)
+	if err != nil {
+		return err
+	}
+
+	svc := dynamodb.New(sess)
+
+	createTableInput := &dynamodb.CreateTableInput{
+		TableName: aws.String("Program"),
+		AttributeDefinitions: []*dynamodb.AttributeDefinition{
+			{
+				AttributeName: aws.String("Name"),
+				AttributeType: aws.String("S"),
+			},
+		},
+		KeySchema: []*dynamodb.KeySchemaElement{
+			{
+				AttributeName: aws.String("Name"),
+				KeyType:       aws.String("HASH"),
+			},
+		},
+		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(5),
+			WriteCapacityUnits: aws.Int64(5),
+		},
+	}
+
+	_, err = svc.CreateTable(createTableInput)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
@@ -279,5 +343,18 @@ func main() {
 		}
 	}
 
-	PutItem(config, items)
+	err = DeleteTable(config)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = CreateTable(config)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = PutItem(config, items)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
