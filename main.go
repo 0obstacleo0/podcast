@@ -187,8 +187,14 @@ func PutItem(config Config, items []Item) error {
 				"Name": {
 					S: aws.String(item.Name),
 				},
+				"ReleaseDate": {
+					S: aws.String(item.ReleaseDate),
+				},
 				"Description": {
 					S: aws.String(item.Description),
+				},
+				"URL": {
+					S: aws.String(item.ExternalUrls.Spotify),
 				},
 			},
 		}
