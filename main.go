@@ -20,6 +20,8 @@ type Config struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	TokenURL     string `json:"token_url"`
+	Region       string `json:"region"`
+	Endpoint     string `json:"endpoint"`
 }
 
 type TokenResponse struct {
@@ -166,10 +168,10 @@ func GetProgramData(tokenResponse TokenResponse, url string) ([]byte, error) {
 	return body, nil
 }
 
-func PutItem(items []Item) {
+func PutItem(config Config, items []Item) {
 	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String("us-west-2"),
-		Endpoint:    aws.String("http://localhost:8000"),
+		Region:      aws.String(config.Region),
+		Endpoint:    aws.String(config.Endpoint),
 		Credentials: credentials.NewStaticCredentials("dummy", "dummy", "dummy")},
 	)
 	if err != nil {
@@ -277,5 +279,5 @@ func main() {
 		}
 	}
 
-	PutItem(items)
+	PutItem(config, items)
 }
